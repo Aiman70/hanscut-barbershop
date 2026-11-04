@@ -1,8 +1,8 @@
 // src/app/api/slots/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateTimeSlots } from '@/lib/utils'
-import { parseISO } from 'date-fns'
+import { generateTimeSlots, getMalaysiaDate } from '@/lib/utils'
+import { parseISO, format } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -113,8 +113,9 @@ export async function GET(request: Request) {
       },
     })
 
-    const now = new Date()
-    const [year, month, day] = date.split('-').map(Number)
+    const myNow = getMalaysiaDate()
+    const todayStr = format(myNow, 'yyyy-MM-dd')
+    const currentMinutes = myNow.getHours() * 60 + myNow.getMinutes()
 
     const slots = allSlots.map((time) => {
       const [hour, min] = time.split(':').map(Number)
@@ -131,12 +132,14 @@ export async function GET(request: Request) {
         return slotStart < bookingEndWithBuffer && slotEnd > bookingStart
       })
 
-      // Bina tarikh slot mengikut waktu tempatan (elak ralat timezone UTC)
-      const slotDateTime = new Date(year, month - 1, day, hour, min, 0, 0)
-
-      // Berikan kelonggaran (grace period) 15 minit untuk hari ini
-      // Supaya bila kedai buka jam 3.00 petang (atau pukul 3.05 petang), pelanggan masih boleh book slot 3.00 petang!
-      const isPast = slotDateTime.getTime() + 15 * 60 * 1000 < now.getTime()
+      // Semakan slot lepas menggunakan zon masa Malaysia dengan 15 minit grace period
+      let isPast = false
+      if (date < todayStr) {
+        isPast = true
+      } else if (date === todayStr) {
+        // Jika hari ini: slot lepas jika masa slot + 15 minit < masa sekarang di Malaysia
+        isPast = (slotStart + 15) < currentMinutes
+      }
 
       return {
         time,

@@ -50,4 +50,9 @@ export function generateTimeSlots(
   return slots
 }
 
+export function getMalaysiaDate(): Date {
+  const now = new Date()
+  return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur' }))
+}
+
 export const DAYS = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu']

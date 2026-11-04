@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
+import { getMalaysiaDate } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +10,8 @@ const db = prisma as any
 
 export async function GET() {
   try {
-    const now = new Date()
+    // Gunakan waktu Malaysia (UTC+8) agar tepat walaupun server Vercel di zon masa UTC
+    const now = getMalaysiaDate()
     const dateStr = format(now, 'yyyy-MM-dd')
     const dayOfWeek = now.getDay()
     const currentHour = now.getHours()

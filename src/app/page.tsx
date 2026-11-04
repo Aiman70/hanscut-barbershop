@@ -18,9 +18,9 @@ export default function HomePage() {
     isHoliday?: boolean
     isWeeklyOff?: boolean
   }>({
-    isOpen: true,
-    statusBadge: 'Kedai Dibuka Sekarang',
-    detail: 'Slot Hari Ini Tersedia',
+    isOpen: false,
+    statusBadge: 'Memeriksa Status Kedai...',
+    detail: 'Waktu Operasi: 3.00 PM - 11.00 PM',
   })
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function HomePage() {
             <span className="text-xs font-bold tracking-wide">
               {shopStatus.isOpen
                 ? 'Kedai Dibuka Sekarang • Slot Hari Ini Tersedia'
-                : `${shopStatus.statusBadge.replace(/^(🟢|🔴)\s*/, '')} • ${shopStatus.detail}`}
+                : `${shopStatus.statusBadge.replace(/^(🟢|🔴|🕒|🌙)\s*/, '')} • ${shopStatus.detail}`}
             </span>
           </div>
 

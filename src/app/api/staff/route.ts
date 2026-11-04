@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { recordAuditLog } from '@/lib/audit'
 import { format } from 'date-fns'
+import { getMalaysiaDate } from '@/lib/utils'
 
 // Paksa Next.js sentiasa tarik data terkini dari database tanpa cache
 export const dynamic = 'force-dynamic'
@@ -13,7 +14,7 @@ export const dynamic = 'force-dynamic'
 // • Sabtu hingga Khamis: 3.00 Petang (15:00) - 11.00 Malam (23:00)
 // • Jumaat (Malam Sahaja): 8.30 Malam (20:30) - 11.00 Malam (23:00)
 async function checkShopOperatingStatus() {
-  const now = new Date()
+  const now = getMalaysiaDate()
   const dateStr = format(now, 'yyyy-MM-dd')
   const dayOfWeek = now.getDay()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
