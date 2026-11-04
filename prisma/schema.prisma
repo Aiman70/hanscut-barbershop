@@ -1,0 +1,150 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  BARBER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  phone         String?
+  role          Role      @default(CUSTOMER)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[] @relation("CustomerBookings")
+  barberProfile Barber?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Barber {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  bio         String?
+  speciality  String?
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int      // dalam minit
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  customerId  String
+  barberId    String
+  serviceId   String
+  date        DateTime
+  startTime   String        // "09:00"
+  endTime     String        // "10:00"
+  status      BookingStatus @default(PENDING)
+  notes       String?
+  totalPrice  Float
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  customer User    @relation("CustomerBookings", fields: [customerId], references: [id])
+  barber   Barber  @relation(fields: [barberId], references: [id])
+  service  Service @relation(fields: [serviceId], references: [id])
+}
+
+model BusinessHours {
+  id        String  @id @default(cuid())
+  dayOfWeek Int     // 0=Ahad, 1=Isnin, ..., 6=Sabtu
+  openTime  String  // "09:00"
+  closeTime String  // "18:00"
+  isClosed  Boolean @default(false)
+}
+
+model ShopSettings {
+  id               String   @id @default("default")
+  dailyQuota       Int      @default(20)
+  noticeMessage    String?  @default("Kedai beroperasi seperti biasa.")
+  isEmergencyClose Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
+}
+
+model ClosedDate {
+  id        String   @id @default(cuid())
+  date      String   @unique // Format: "YYYY-MM-DD"
+  reason    String?  @default("Cuti Khas / Rehat")
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // "UPDATE_SETTINGS", "ADD_CLOSED_DATE", "REOPEN_DATE", "CREATE_SERVICE", "UPDATE_SERVICE", "DELETE_SERVICE", "CREATE_STAFF", "DELETE_STAFF", "TOGGLE_AVAILABILITY"
+  category  String   // "SETTINGS", "STAFF", "SERVICE", "BOOKING", "AUTH"
+  details   String   // Keterangan terperinci tindakan yang dilakukan
+  userId    String?
+  userEmail String?
+  userRole  String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([category])
+}
