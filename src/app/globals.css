@@ -1,30 +1,30 @@
-/* src/app/globals.css */
+/* src/app/globals.css - Hanscut Online Design System Foundation */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --background: 240 10% 4%;        /* #0a0a0c Deep Charcoal Base */
+    --foreground: 0 0% 98%;          /* #f9fafb Primary Crisp White */
+    --card: 240 6% 7%;               /* #121215 Surface Card */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 9%;            /* #18181c Overlay / Modal Surface */
+    --popover-foreground: 0 0% 98%;
+    --primary: 38 92% 50%;           /* #f59e0b Burnished Brass / Amber Accent */
+    --primary-foreground: 240 10% 4%;/* Dark text for contrast on primary amber */
+    --secondary: 240 5% 14%;         /* #222227 Secondary Slate Surface */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 14%;
+    --muted-foreground: 240 5% 65%;  /* #9e9ea7 Muted Subtitles */
+    --accent: 38 92% 50%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 60%;        /* Red / Cancelled */
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 18%;            /* #2a2a32 Subtle Boundary */
+    --input: 240 5% 18%;
+    --ring: 38 92% 50%;              /* Amber focus halo */
+    --radius: 0.75rem;               /* 12px default border radius */
   }
 }
 
@@ -33,6 +33,23 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Custom Ergonomic Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0c;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
 }

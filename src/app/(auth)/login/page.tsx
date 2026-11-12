@@ -1,12 +1,15 @@
-// src/app/(auth)/login/page.tsx
+// src/app/(auth)/login/page.tsx - Hanscut Online Login
 'use client'
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Scissors, Eye, EyeOff } from 'lucide-react'
+import { Scissors, Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,126 +33,134 @@ export default function LoginPage() {
         if (result.error === 'account_locked' || result.error.includes('account_locked')) {
           toast({
             title: '🚨 Akaun Disekat Sementara!',
-            description: 'Terlalu banyak percubaan kata laluan gagal berturut-turut. Akaun ini disekat selama 5 minit demi keselamatan (Anti-Brute Force).',
+            description: 'Terlalu banyak percubaan kata laluan gagal. Akaun ini disekat selama 5 minit demi keselamatan.',
             variant: 'destructive',
           })
         } else {
           toast({
             title: 'Log masuk gagal',
-            description: 'Email atau kata laluan tidak betul. (Maksimum 5 percubaan sebelum akaun disekat)',
+            description: 'Email atau kata laluan tidak tepat.',
             variant: 'destructive',
           })
         }
       } else {
-       
-  toast({ title: 'Berjaya log masuk! 🎉' })
+        toast({ title: 'Berjaya log masuk! 🎉' })
 
-  // Semak role pengguna yang tengah login
-  const sessionRes = await fetch('/api/auth/session')
-  const sessionData = await sessionRes.json()
-  const role = sessionData?.user?.role
+        // Semak peranan pengguna
+        const sessionRes = await fetch('/api/auth/session')
+        const sessionData = await sessionRes.json()
+        const role = sessionData?.user?.role
 
-  if (role === 'ADMIN') {
-    router.push('/dashboard')
-  } else if (role === 'BARBER') {
-    router.push('/barber')
-  } else {
-    router.push('/booking')
-  }
+        if (role === 'ADMIN') {
+          router.push('/dashboard')
+        } else if (role === 'BARBER') {
+          router.push('/barber')
+        } else {
+          router.push('/booking')
+        }
 
-  router.refresh()
-}
+        router.refresh()
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-                {/* Butang Kembali ke Laman Utama */}
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors bg-gray-900 border border-gray-800 px-3.5 py-2 rounded-xl"
-          >
-            ← Kembali ke Laman Utama
+    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-4 selection:bg-amber-400 selection:text-gray-950">
+      <div className="w-full max-w-md space-y-6">
+        {/* Butang Kembali */}
+        <div>
+          <Link href="/">
+            <Button variant="secondary" size="sm" leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}>
+              Kembali ke Laman Utama
+            </Button>
           </Link>
-        </div>
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-white">
-            <Scissors className="h-8 w-8 text-amber-400" />
-            <span className="text-2xl font-bold">Hanscut Barbershop</span>
-          </Link>
-          <h1 className="text-3xl font-bold text-white mt-6 mb-2">Log Masuk</h1>
-          <p className="text-gray-400">Masuk untuk urus tempahan anda</p>
         </div>
 
-        {/* Form */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Logo & Tajuk */}
+        <div className="text-center space-y-2">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <div className="p-2.5 bg-amber-400/10 border border-amber-400/20 rounded-2xl group-hover:bg-amber-400/20 transition-all">
+              <Scissors className="h-6 w-6 text-amber-400" />
+            </div>
+            <span className="text-2xl font-black tracking-tight text-white">
+              Hanscut <span className="text-amber-400">Barbershop</span>
+            </span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-black text-white pt-2">Log Masuk Akaun</h1>
+          <p className="text-xs sm:text-sm text-gray-400">Masuk untuk urus temujanji dan semak status kad VIP anda</p>
+        </div>
+
+        {/* Form Card (Shared Card Component) */}
+        <Card className="p-6 sm:p-8 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                Alamat Email *
               </label>
-              <input
+              <Input
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="nama@email.com"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                leftIcon={<Mail className="h-4 w-4" />}
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-300">
-                  Kata Laluan
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-gray-300">
+                  Kata Laluan *
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                  className="text-xs font-semibold text-amber-400 hover:underline"
                 >
                   Lupa kata laluan?
                 </Link>
               </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
+
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                leftIcon={<Lock className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1 text-gray-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-amber-400 text-gray-950 py-3 rounded-lg font-bold text-lg hover:bg-amber-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Sedang log masuk...' : 'Log Masuk'}
-            </button>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={loading}
+                className="w-full min-h-[48px]"
+              >
+                Log Masuk
+              </Button>
+            </div>
           </form>
 
-          <p className="mt-6 text-center text-gray-400">
+          <p className="mt-6 text-center text-xs text-gray-400">
             Belum ada akaun?{' '}
-            <Link href="/register" className="text-amber-400 hover:text-amber-300 font-semibold">
+            <Link href="/register" className="text-amber-400 hover:underline font-bold">
               Daftar sekarang
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   )

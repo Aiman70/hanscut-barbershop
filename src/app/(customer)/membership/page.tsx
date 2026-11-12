@@ -9,6 +9,9 @@ import {
   Clock, ArrowRight, ShieldCheck, Flame, Zap
 } from 'lucide-react'
 import { CustomerNav } from '@/components/customer-nav'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface MembershipData {
   totalCuts: number
@@ -42,43 +45,43 @@ export default function MembershipCardPage() {
   }, [status])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-16 selection:bg-amber-400 selection:text-gray-950">
+    <div className="min-h-screen bg-gray-950 text-white pb-28 md:pb-16 selection:bg-amber-400 selection:text-gray-950">
       <CustomerNav />
 
-      <main className="max-w-4xl mx-auto px-5 pt-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
         {/* Header */}
-        <div className="text-center max-w-xl mx-auto mb-10">
+        <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 px-3.5 py-1.5 rounded-full text-xs font-bold text-amber-400 mb-3">
             <Sparkles className="h-3.5 w-3.5" /> Program Kesetiaan Hanscut Barbershop VIP
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
             Kad Loyalty & Ganjaran Anda
           </h1>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="text-gray-400 text-xs sm:text-sm mt-2">
             Setiap kali selesai gunting rambut, anda automatik dapat 1 cop. Kumpul 10 cop untuk tebus <span className="text-amber-400 font-bold">Cuci Rambut / Pakej Percuma</span>!
           </p>
         </div>
 
         {/* 💳 KAD MEMBERSHIP VIP HITAM-EMAS (Digital VIP Card) */}
-        <div className="max-w-lg mx-auto mb-12">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 via-neutral-900 to-black p-7 sm:p-8 border border-amber-500/30 shadow-2xl shadow-amber-500/10 group">
+        <div className="max-w-md mx-auto mb-10">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 via-neutral-900 to-black p-6 sm:p-7 border border-amber-500/30 shadow-2xl shadow-amber-500/10">
             {/* Background Glow Effect */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-0" />
             <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none -z-0" />
 
             {/* Kad Atas: Logo & Tier */}
-            <div className="relative z-10 flex items-start justify-between mb-8">
+            <div className="relative z-10 flex items-start justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-amber-400 text-gray-950 rounded-xl shadow-md">
                   <Scissors className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg tracking-tight text-white leading-tight">Hanscut Barbershop</h3>
+                  <h3 className="font-black text-base sm:text-lg tracking-tight text-white leading-tight">Hanscut Barbershop</h3>
                   <p className="text-[10px] text-amber-400 font-extrabold tracking-widest uppercase">VIP Club Card • #REZEKI DI KONGSI BERSAMA</p>
                 </div>
               </div>
 
-              <span className="bg-gradient-to-r from-amber-400 to-yellow-300 text-gray-950 text-xs font-black px-3.5 py-1 rounded-full shadow-md uppercase tracking-wider">
+              <span className="bg-amber-400 text-gray-950 text-xs font-black px-3 py-1 rounded-full shadow-md uppercase tracking-wider">
                 {data?.tier || 'MEMBER'}
               </span>
             </div>
@@ -88,7 +91,7 @@ export default function MembershipCardPage() {
               <span className="text-[10px] uppercase tracking-widest text-gray-400 block font-semibold mb-1">
                 Nama Ahli (Cardholder)
               </span>
-              <p className="text-2xl font-black text-white tracking-wide truncate">
+              <p className="text-xl sm:text-2xl font-black text-white tracking-wide truncate">
                 {session?.user?.name || 'Pelanggan Setia'}
               </p>
               <p className="text-xs font-mono text-gray-400 tracking-widest mt-1">
@@ -111,10 +114,10 @@ export default function MembershipCardPage() {
         </div>
 
         {/* 🎟️ 10 BULATAN COP KESETIAAN (STAMP CARD) */}
-        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 sm:p-8 mb-10 shadow-xl">
+        <Card className="rounded-3xl p-5 sm:p-7 mb-8 shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-800">
             <div>
-              <h2 className="text-xl font-bold flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                 <Flame className="h-5 w-5 text-amber-400" /> Kad Cop Gunting Rambut
               </h2>
               <p className="text-xs text-gray-400 mt-1">
@@ -123,14 +126,14 @@ export default function MembershipCardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs bg-gray-800 text-gray-300 px-3 py-1.5 rounded-xl font-bold border border-gray-700">
+              <Badge variant="amber" size="md">
                 Pusingan Semasa: {data?.currentCycleStamps || 0}/10 Cop
-              </span>
+              </Badge>
             </div>
           </div>
 
           {/* Grid 10 Bulatan Cop */}
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-3 mb-6">
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2.5 sm:gap-3 mb-6">
             {[...Array(10)].map((_, i) => {
               const stampNumber = i + 1
               const isStamped = (data?.currentCycleStamps || 0) >= stampNumber
@@ -143,10 +146,10 @@ export default function MembershipCardPage() {
                     isRewardSlot
                       ? isStamped
                         ? 'bg-amber-400 text-gray-950 font-black shadow-lg shadow-amber-400/30 scale-105 border-2 border-yellow-300'
-                        : 'bg-gradient-to-b from-amber-500/20 to-yellow-500/10 border-2 border-dashed border-amber-400/40 text-amber-400'
+                        : 'bg-amber-500/10 border-2 border-dashed border-amber-400/40 text-amber-400'
                       : isStamped
                       ? 'bg-amber-400 text-gray-950 font-black shadow-md shadow-amber-500/20'
-                      : 'bg-gray-800/60 border border-gray-700/60 text-gray-600'
+                      : 'bg-gray-950 border border-gray-800 text-gray-600'
                   }`}
                 >
                   {isStamped ? (
@@ -170,9 +173,9 @@ export default function MembershipCardPage() {
 
           {/* Bar Kemajuan (Progress Bar) */}
           <div className="space-y-1.5">
-            <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden p-0.5 border border-gray-700">
+            <div className="w-full bg-gray-950 rounded-full h-3 overflow-hidden p-0.5 border border-gray-800">
               <div
-                className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full transition-all duration-500"
+                className="bg-amber-400 h-full rounded-full transition-all duration-500"
                 style={{ width: `${((data?.currentCycleStamps || 0) / 10) * 100}%` }}
               />
             </div>
@@ -182,54 +185,53 @@ export default function MembershipCardPage() {
               <span className="text-amber-400 font-bold">10 Cop (Tebus Percuma)</span>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* 🎁 GAJARAN & KEISTIMEWAAN AHLI (PERKS) */}
-        <div className="grid md:grid-cols-3 gap-5 mb-12">
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
-            <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit mb-3 text-amber-400">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="p-5 space-y-2">
+            <div className="p-2.5 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit text-amber-400">
               <Gift className="h-5 w-5" />
             </div>
             <h3 className="font-bold text-white text-base">Gunting Ke-10 Percuma</h3>
-            <p className="text-gray-400 text-xs mt-1.5 leading-relaxed">
+            <p className="text-gray-400 text-xs leading-relaxed">
               Dapat pakej cuci rambut atau gunting rambut percuma setiap kali cukup 10 kunjungan berturut-turut.
             </p>
-          </div>
+          </Card>
 
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
-            <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit mb-3 text-amber-400">
+          <Card className="p-5 space-y-2">
+            <div className="p-2.5 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit text-amber-400">
               <Zap className="h-5 w-5" />
             </div>
-            <h3 className="font-bold text-white text-base">Keutamaan Tempahan (Priority)</h3>
-            <p className="text-gray-400 text-xs mt-1.5 leading-relaxed">
+            <h3 className="font-bold text-white text-base">Keutamaan Tempahan</h3>
+            <p className="text-gray-400 text-xs leading-relaxed">
               Ahli berdaftar boleh membuat tempahan sehingga 30 hari lebih awal berbanding pelanggan walk-in.
             </p>
-          </div>
+          </Card>
 
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl">
-            <div className="p-3 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit mb-3 text-amber-400">
+          <Card className="p-5 space-y-2">
+            <div className="p-2.5 bg-amber-400/10 border border-amber-400/20 rounded-xl w-fit text-amber-400">
               <Award className="h-5 w-5" />
             </div>
             <h3 className="font-bold text-white text-base">Barber Kegemaran</h3>
-            <p className="text-gray-400 text-xs mt-1.5 leading-relaxed">
+            <p className="text-gray-400 text-xs leading-relaxed">
               Barber pilihan anda: <span className="text-amber-400 font-bold">{data?.favoriteBarber || 'Pilih semasa booking'}</span>. Sentiasa ingat gaya kegemaran anda!
             </p>
-          </div>
+          </Card>
         </div>
 
         {/* Butang CTA Tempah Sekarang */}
-        <div className="text-center bg-gradient-to-r from-gray-900 via-gray-900/90 to-gray-900 border border-gray-800 p-8 rounded-3xl">
-          <h3 className="text-xl font-bold mb-2">Dah Masa Untuk Kemaskan Rambut Anda?</h3>
-          <p className="text-gray-400 text-xs max-w-md mx-auto mb-6">
+        <Card className="text-center p-6 sm:p-8 rounded-3xl">
+          <h3 className="text-lg sm:text-xl font-bold mb-1.5 text-white">Dah Masa Untuk Kemaskan Rambut Anda?</h3>
+          <p className="text-gray-400 text-xs max-w-md mx-auto mb-5">
             Tempah temujanji seterusnya sekarang dan kumpulkan cop loyalty anda hari ini!
           </p>
-          <Link
-            href="/booking"
-            className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-950 font-black px-8 py-3.5 rounded-2xl text-sm transition-all shadow-lg shadow-amber-500/20 active:scale-95"
-          >
-            Tempah Temujanji Sekarang <ArrowRight className="h-4 w-4" />
+          <Link href="/booking">
+            <Button variant="primary" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+              Tempah Temujanji Sekarang
+            </Button>
           </Link>
-        </div>
+        </Card>
       </main>
     </div>
   )

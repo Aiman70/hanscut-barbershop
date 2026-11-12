@@ -1,18 +1,20 @@
 'use client'
 
 import { AdminSidebar } from '@/components/admin-sidebar'
-
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import {
-  Scissors, Shield, RefreshCw, LogOut, Clock,
-  Search, Filter, Activity, User, Globe
+  Shield, Clock, User, Globe, Search, RefreshCw, Activity,
+  Filter, FileText, CheckCircle2, AlertTriangle, AlertCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ms } from 'date-fns/locale'
-import { signOut } from 'next-auth/react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface AuditLog {
   id: string
@@ -27,11 +29,10 @@ interface AuditLog {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  SETTINGS: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  SETTINGS: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   STAFF: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  SERVICE: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  BOOKING: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  AUTH: 'bg-red-500/10 text-red-400 border-red-500/20',
+  SERVICE: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  SECURITY: 'bg-red-500/10 text-red-400 border-red-500/20',
 }
 
 export default function AuditLogsPage() {
@@ -44,103 +45,96 @@ export default function AuditLogsPage() {
   const [selectedCategory, setSelectedCategory] = useState('ALL')
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-      return
-    }
+    if (status === 'unauthenticated') { router.push('/login'); return }
     if (status === 'authenticated') {
-      if ((session?.user as any)?.role !== 'ADMIN') {
-        router.push('/booking')
-        return
-      }
+      if ((session?.user as any)?.role !== 'ADMIN') { router.push('/booking'); return }
       fetchLogs()
     }
-  }, [status, session, selectedCategory])
+  }, [status, session])
 
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      const url = selectedCategory === 'ALL'
-        ? '/api/admin/audit-logs'
-        : `/api/admin/audit-logs?category=${selectedCategory}`
-      const res = await fetch(url)
-      if (res.ok) {
-        const data = await res.json()
-        setLogs(Array.isArray(data.logs) ? data.logs : [])
-      }
+      const res = await fetch('/api/admin/audit-logs')
+      const data = await res.json()
+      setLogs(Array.isArray(data) ? data : [])
     } finally {
       setLoading(false)
     }
   }
 
   const filteredLogs = logs.filter((log) => {
+    const matchesCategory = selectedCategory === 'ALL' || log.category === selectedCategory
+    if (!matchesCategory) return false
+
+    const q = searchTerm.toLowerCase()
     const matchesSearch =
-      log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (log.userEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      !searchTerm ||
+      log.action.toLowerCase().includes(q) ||
+      log.details.toLowerCase().includes(q) ||
+      (log.userEmail || '').toLowerCase().includes(q) ||
       (log.ipAddress || '').includes(searchTerm)
     return matchesSearch
   })
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex">
-      {/* Sidebar Admin */}
+    <div className="min-h-screen bg-gray-950 text-white flex selection:bg-amber-400 selection:text-gray-950">
       <AdminSidebar />
 
-      {/* Main Content Area */}
-      <main className="flex-1 ml-64 p-8 max-w-6xl">
+      {/* Main Content Area dengan margin responsif untuk telefon */}
+      <main className="flex-1 md:ml-64 pt-20 md:pt-8 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full pb-20">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <Shield className="h-7 w-7 text-amber-400" />
-              <h1 className="text-2xl font-black">Jejak Log Audit (Audit Trail)</h1>
+              <Shield className="h-6 w-6 text-amber-400" />
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Jejak Log Audit (Audit Trail)</h1>
             </div>
-            <p className="text-gray-400 text-sm mt-1">
-              Rekod bukti telus bagi setiap perubahan sistem, konfigurasi kedai, dan pengurusan staf.
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">
+              Rekod telus bagi setiap perubahan sistem, konfigurasi kedai, dan pengurusan staf.
             </p>
           </div>
 
-          <button
+          <Button
+            variant="secondary"
+            size="md"
             onClick={fetchLogs}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white text-sm font-semibold transition-all self-start sm:self-auto"
+            isLoading={loading}
+            leftIcon={<RefreshCw className="h-4 w-4 text-amber-400" />}
+            className="self-start sm:self-auto min-h-[44px]"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-amber-400' : ''}`} />
             Muat Semula Log
-          </button>
+          </Button>
         </div>
 
-        {/* Filter & Carian */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="flex items-center gap-2 w-full md:w-96 bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5">
-            <Search className="h-4 w-4 text-gray-400" />
-            <input
-              type="text"
+        {/* Filter & Carian (Shared Card & Input Primitives) */}
+        <Card className="p-3 sm:p-4 mb-6 flex flex-col md:flex-row gap-3 justify-between items-center">
+          <div className="w-full md:w-96">
+            <Input
               placeholder="Cari tindakan, emel, atau IP address..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent text-sm text-white placeholder-gray-500 outline-none w-full"
+              leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
 
           {/* Kategori Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none">
             {['ALL', 'SETTINGS', 'STAFF', 'SERVICE'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shrink-0 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[38px] ${
                   selectedCategory === cat
-                    ? 'bg-amber-400 text-gray-950 border-amber-400 shadow-sm'
-                    : 'bg-gray-950 border-gray-800 text-gray-400 hover:text-white'
+                    ? 'bg-amber-400 text-gray-950 shadow-sm'
+                    : 'bg-gray-950 border border-gray-800 text-gray-400 hover:text-white'
                 }`}
               >
                 {cat === 'ALL' ? 'Semua Kategori' : cat}
               </button>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Senarai Log */}
         {loading ? (
@@ -150,28 +144,26 @@ export default function AuditLogsPage() {
             ))}
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center text-gray-500">
-            <Activity className="h-10 w-10 mx-auto mb-3 opacity-30 text-amber-400" />
-            <p className="font-bold text-sm">Tiada Rekod Audit Dijumpai</p>
-            <p className="text-xs text-gray-600 mt-1">
-              Sebarang perubahan tetapan atau pengurusan servis akan dipaparkan di sini secara automatik.
-            </p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="Tiada Rekod Audit Dijumpai"
+            description="Sebarang perubahan tetapan atau pengurusan servis akan dipaparkan di sini secara automatik."
+          />
         ) : (
           <div className="space-y-3">
             {filteredLogs.map((log) => {
               const catColor = CATEGORY_COLORS[log.category] || 'bg-gray-800 text-gray-300 border-gray-700'
               return (
-                <div
+                <Card
                   key={log.id}
-                  className="bg-gray-900/90 border border-gray-800/80 hover:border-gray-700 rounded-2xl p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
+                  className="p-4 hover:border-gray-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${catColor}`}>
                         {log.category}
                       </span>
-                      <span className="text-xs font-bold text-white bg-gray-800/80 px-2 py-0.5 rounded-md border border-gray-700/60">
+                      <span className="text-xs font-bold text-white bg-gray-950 px-2 py-0.5 rounded-md border border-gray-800">
                         {log.action}
                       </span>
                       <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -180,20 +172,20 @@ export default function AuditLogsPage() {
                       </span>
                     </div>
 
-                    <p className="text-sm text-gray-200 font-medium leading-relaxed">
+                    <p className="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed">
                       {log.details}
                     </p>
                   </div>
 
                   {/* Metadata Pelaku (User & IP) */}
-                  <div className="flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 border-gray-800/60 pt-2 md:pt-0 gap-1 text-right shrink-0">
-                    <div className="flex items-center gap-1.5 text-xs text-amber-400/90 font-semibold">
+                  <div className="flex md:flex-col items-center md:items-end justify-between border-t md:border-t-0 border-gray-800 pt-2 md:pt-0 gap-1 text-right shrink-0">
+                    <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
                       <User className="h-3.5 w-3.5" />
                       <span>{log.userEmail || 'Sistem'}</span>
                       {log.userRole && (
-                        <span className="text-[10px] bg-amber-400/10 text-amber-300 px-1.5 py-0.2 rounded border border-amber-400/20 font-bold">
+                        <Badge variant="amber" size="sm">
                           {log.userRole}
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -204,7 +196,7 @@ export default function AuditLogsPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               )
             })}
           </div>

@@ -1,11 +1,14 @@
-// src/app/(auth)/register/page.tsx
+// src/app/(auth)/register/page.tsx - Hanscut Online Register
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Scissors } from 'lucide-react'
+import { Scissors, ArrowLeft, User, Mail, Phone, Lock } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -25,6 +28,16 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) {
       toast({
         title: 'Kata laluan tidak sepadan',
+        description: 'Sila pastikan kata laluan dan pengesahan kata laluan adalah sama.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (form.password.length < 6) {
+      toast({
+        title: 'Kata laluan terlalu pendek',
+        description: 'Kata laluan mestilah sekurang-kurangnya 6 aksara.',
         variant: 'destructive',
       })
       return
@@ -55,7 +68,7 @@ export default function RegisterPage() {
       } else {
         toast({
           title: 'Akaun berjaya dibuat! 🎉',
-          description: 'Sila log masuk untuk meneruskan',
+          description: 'Sila log masuk untuk meneruskan temujanji anda',
         })
         router.push('/login')
       }
@@ -65,94 +78,109 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-white">
-            <Scissors className="h-8 w-8 text-amber-400" />
-            <span className="text-2xl font-bold">Hanscut Barbershop</span>
+    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-4 py-8 selection:bg-amber-400 selection:text-gray-950">
+      <div className="w-full max-w-md space-y-6">
+        <div>
+          <Link href="/">
+            <Button variant="secondary" size="sm" leftIcon={<ArrowLeft className="h-3.5 w-3.5" />}>
+              Kembali ke Laman Utama
+            </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-white mt-6 mb-2">Daftar Akaun</h1>
-          <p className="text-gray-400">Sertai kami dan nikmati kemudahan tempahan online</p>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="text-center space-y-2">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <div className="p-2.5 bg-amber-400/10 border border-amber-400/20 rounded-2xl group-hover:bg-amber-400/20 transition-all">
+              <Scissors className="h-6 w-6 text-amber-400" />
+            </div>
+            <span className="text-2xl font-black tracking-tight text-white">
+              Hanscut <span className="text-amber-400">Barbershop</span>
+            </span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-black text-white pt-2">Daftar Akaun Ahli</h1>
+          <p className="text-xs sm:text-sm text-gray-400">Sertai kami dan nikmati kemudahan tempahan slot online pantas</p>
+        </div>
+
+        <Card className="p-6 sm:p-8 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Nama Penuh</label>
-              <input
-                type="text"
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">Nama Penuh *</label>
+              <Input
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Muhammad Ali"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                leftIcon={<User className="h-4 w-4" />}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-              <input
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">Alamat Email *</label>
+              <Input
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="nama@email.com"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                leftIcon={<Mail className="h-4 w-4" />}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">No. Telefon</label>
-              <input
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">No. Telefon</label>
+              <Input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="01X-XXXXXXX"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                placeholder="012-3456789"
+                leftIcon={<Phone className="h-4 w-4" />}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Kata Laluan</label>
-              <input
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">Kata Laluan *</label>
+              <Input
                 type="password"
                 required
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Min. 6 aksara"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                leftIcon={<Lock className="h-4 w-4" />}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Sahkan Kata Laluan</label>
-              <input
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">Sahkan Kata Laluan *</label>
+              <Input
                 type="password"
                 required
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                 placeholder="Ulang kata laluan"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 transition-colors"
+                leftIcon={<Lock className="h-4 w-4" />}
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-amber-400 text-gray-950 py-3 rounded-lg font-bold text-lg hover:bg-amber-300 transition-colors disabled:opacity-50"
-            >
-              {loading ? 'Mendaftar...' : 'Daftar Akaun'}
-            </button>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={loading}
+                className="w-full min-h-[48px]"
+              >
+                Daftar Akaun
+              </Button>
+            </div>
           </form>
 
-          <p className="mt-6 text-center text-gray-400">
+          <p className="mt-5 text-center text-xs text-gray-400">
             Sudah ada akaun?{' '}
-            <Link href="/login" className="text-amber-400 hover:text-amber-300 font-semibold">
+            <Link href="/login" className="text-amber-400 hover:underline font-bold">
               Log masuk
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   )

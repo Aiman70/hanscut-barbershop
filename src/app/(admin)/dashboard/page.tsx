@@ -1,19 +1,21 @@
 'use client'
 
 import { AdminSidebar } from '@/components/admin-sidebar'
-
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Scissors, Calendar, Users, TrendingUp,
-  Clock, CheckCircle, BarChart2, DollarSign, LogOut, ArrowRight
+  Calendar, Users, TrendingUp, Clock, DollarSign,
+  ArrowRight, Scissors, Sparkles, RefreshCw
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ms } from 'date-fns/locale'
 import { formatCurrency } from '@/lib/utils'
-import { signOut } from 'next-auth/react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Stats {
   totalBookings: number
@@ -32,13 +34,6 @@ interface Booking {
   customer: { name: string | null; phone: string | null }
   service: { name: string }
   barber: { user: { name: string | null } }
-}
-
-const STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
-  PENDING: { label: 'Menunggu', badge: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' },
-  CONFIRMED: { label: 'Disahkan', badge: 'bg-green-500/10 text-green-400 border border-green-500/20' },
-  COMPLETED: { label: 'Selesai', badge: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
-  CANCELLED: { label: 'Batal', badge: 'bg-red-500/10 text-red-400 border border-red-500/20' },
 }
 
 export default function AdminDashboard() {
@@ -75,127 +70,146 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-base animate-pulse">Memuatkan statistik bisnes...</div>
+        <div className="text-white text-sm font-semibold animate-pulse flex items-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin text-amber-400" />
+          <span>Memuatkan data dashboard...</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex">
-      {/* Sidebar Admin */}
+    <div className="min-h-screen bg-gray-950 text-white flex selection:bg-amber-400 selection:text-gray-950">
       <AdminSidebar />
 
-      {/* Main Content */}
-      <main className="ml-64 flex-1 p-8">
-        <div className="flex items-center justify-between mb-8">
+      {/* Main Content dengan margin responsif untuk telefon pintar */}
+      <main className="flex-1 md:ml-64 pt-20 md:pt-8 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full pb-20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-1">Dashboard Prestasi Bisnes</h1>
-            <p className="text-gray-400 text-sm">
-              Ringkasan aktiviti kedai pada {format(new Date(), "EEEE, dd MMMM yyyy", { locale: ms })}
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Dashboard Ringkasan</h1>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">
+              Prestasi kedai pada {format(new Date(), "EEEE, dd MMMM yyyy", { locale: ms })}
             </p>
           </div>
-          
-          <Link
-            href="/bookings"
-            className="flex items-center gap-2 bg-amber-400 text-gray-950 font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-amber-300 transition-all shadow-md"
-          >
-            Urus Tempahan Penuh <ArrowRight className="h-4 w-4" />
+
+          <Link href="/bookings">
+            <Button
+              variant="primary"
+              size="md"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="self-start sm:self-auto min-h-[44px]"
+            >
+              Urus Tempahan Penuh
+            </Button>
           </Link>
         </div>
 
-        {/* 4 Kad Statistik Utama */}
+        {/* 4 Kad Statistik Utama (Card Primitives) */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             {[
-              { label: 'Jumlah Duit Masuk', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-green-400', bg: 'bg-green-500/10' },
+              { label: 'Jumlah Duit Masuk', value: formatCurrency(stats.totalRevenue), icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
               { label: 'Hasil Bulan Ini', value: formatCurrency(stats.monthlyRevenue), icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-500/10' },
               { label: 'Tempahan Hari Ini', value: stats.todayBookings, icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
               { label: 'Menunggu Sahkan', value: stats.pendingBookings, icon: Calendar, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
             ].map((card, i) => (
-              <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 hover:border-gray-700 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-400 text-xs font-medium">{card.label}</span>
-                  <div className={`p-2 rounded-xl ${card.bg}`}>
+              <Card key={i} className="p-4 sm:p-5 hover:border-gray-700 transition-all">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <span className="text-gray-400 text-[11px] sm:text-xs font-medium truncate">{card.label}</span>
+                  <div className={`p-2 rounded-xl ${card.bg} shrink-0`}>
                     <card.icon className={`h-4 w-4 ${card.color}`} />
                   </div>
                 </div>
-                <p className={`text-2xl font-extrabold ${card.color}`}>{card.value}</p>
-              </div>
+                <p className={`text-xl sm:text-2xl font-black ${card.color}`}>{card.value}</p>
+              </Card>
             ))}
           </div>
         )}
 
-        {/* Kad Jalan Pantas (Quick Shortcuts) */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Link href="/staff" className="bg-gray-900 border border-gray-800 hover:border-amber-400/40 p-5 rounded-2xl transition-all group">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-white group-hover:text-amber-400 transition-colors">✂️ Urus Staff Barber</span>
-              <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400" />
-            </div>
-            <p className="text-xs text-gray-400">Tambah tukang gunting baru atau semak kehadiran.</p>
+        {/* Kad Jalan Pantas (Quick Actions) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <Link href="/staff">
+            <Card className="hover:border-amber-400/40 p-4 sm:p-5 transition-all group flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-sm sm:text-base text-white group-hover:text-amber-400 transition-colors flex items-center gap-2">
+                  <Users className="h-4 w-4 text-amber-400" /> Urus Staff Barber
+                </span>
+                <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
+              </div>
+              <p className="text-xs text-gray-400">Semak kehadiran dan status rehat tukang gunting.</p>
+            </Card>
           </Link>
 
-          <Link href="/services" className="bg-gray-900 border border-gray-800 hover:border-amber-400/40 p-5 rounded-2xl transition-all group">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-white group-hover:text-amber-400 transition-colors">💈 Servis & Senarai Harga</span>
-              <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400" />
-            </div>
-            <p className="text-xs text-gray-400">Tukar harga potongan rambut, beard trim, atau servis baru.</p>
+          <Link href="/services">
+            <Card className="hover:border-amber-400/40 p-4 sm:p-5 transition-all group flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-sm sm:text-base text-white group-hover:text-amber-400 transition-colors flex items-center gap-2">
+                  <Scissors className="h-4 w-4 text-amber-400" /> Servis & Harga
+                </span>
+                <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
+              </div>
+              <p className="text-xs text-gray-400">Kemas kini harga pakej gunting rambut dan janggut.</p>
+            </Card>
           </Link>
 
-          <Link href="/bookings" className="bg-gray-900 border border-gray-800 hover:border-amber-400/40 p-5 rounded-2xl transition-all group">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-white group-hover:text-amber-400 transition-colors">📅 Tempahan Hari Ini</span>
-              <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400" />
-            </div>
-            <p className="text-xs text-gray-400">Semak senarai nama pelanggan yang akan hadir hari ini.</p>
+          <Link href="/bookings">
+            <Card className="hover:border-amber-400/40 p-4 sm:p-5 transition-all group flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-bold text-sm sm:text-base text-white group-hover:text-amber-400 transition-colors flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-amber-400" /> Senarai Tempahan
+                </span>
+                <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
+              </div>
+              <p className="text-xs text-gray-400">Sahkan pelanggan atau kemas kini status gunting.</p>
+            </Card>
           </Link>
         </div>
 
         {/* 5 Tempahan Terkini */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-5">
+        <Card className="p-4 sm:p-6 shadow-md">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold">5 Tempahan Terkini</h2>
-              <p className="text-xs text-gray-400">Ringkasan transaksi tempahan paling baru dibuat</p>
+              <h2 className="text-base sm:text-lg font-bold text-white">5 Tempahan Terkini</h2>
+              <p className="text-xs text-gray-400">Ringkasan transaksi tempahan paling baharu</p>
             </div>
             <Link
               href="/bookings"
-              className="text-xs text-amber-400 hover:underline font-semibold flex items-center gap-1"
+              className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 min-h-[36px]"
             >
-              Lihat Semua Tempahan ({stats?.totalBookings || 0}) →
+              Lihat Semua ({stats?.totalBookings || 0}) →
             </Link>
           </div>
 
           {recentBookings.length === 0 ? (
-            <div className="py-8 text-center text-gray-500 text-sm">
+            <div className="py-8 text-center text-gray-500 text-xs sm:text-sm">
               Tiada tempahan dibuat lagi setakat ini.
             </div>
           ) : (
-            <div className="space-y-3">
-              {recentBookings.map((b) => {
-                const cfg = STATUS_CONFIG[b.status] || { label: b.status, badge: 'bg-gray-800 text-gray-400' }
-                return (
-                  <div key={b.id} className="bg-gray-800/40 border border-gray-800 p-4 rounded-xl flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-sm text-white">{b.customer?.name || 'Pelanggan'}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {b.service?.name} • Barber: <span className="text-amber-400">{b.barber?.user?.name || '-'}</span>
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="font-bold text-sm text-amber-400">{formatCurrency(b.totalPrice)}</p>
-                      <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.badge}`}>
-                        {cfg.label}
-                      </span>
-                    </div>
+            <div className="space-y-2.5">
+              {recentBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="bg-gray-950/70 border border-gray-800/80 p-3.5 rounded-xl flex items-center justify-between gap-3 hover:border-gray-700 transition-all"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-xs sm:text-sm text-white truncate">
+                      {b.customer?.name || 'Pelanggan'}
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                      {b.service?.name} • Barber:{' '}
+                      <span className="text-amber-400 font-medium">{b.barber?.user?.name || '-'}</span>
+                    </p>
                   </div>
-                )
-              })}
+
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <p className="font-bold text-xs sm:text-sm text-amber-400">{formatCurrency(b.totalPrice)}</p>
+                    <StatusBadge status={b.status} size="sm" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-        </div>
+        </Card>
       </main>
     </div>
   )
