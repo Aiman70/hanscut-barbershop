@@ -2,7 +2,7 @@
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: Number(process.env.EMAIL_PORT) || 587,
   secure: false,
   auth: {
@@ -10,6 +10,72 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 })
+
+interface SendEmailParams {
+  to: string
+  subject: string
+  html: string
+}
+
+/**
+ * Hantar emel menggunakan Resend API (HTTPS) sebagai keutamaan utama kerana
+ * sangat pantas dan kalis sekatan pelayan serverless Vercel.
+ * Jika Resend tidak dikonfigurasi, sistem akan fallback ke Nodemailer SMTP secara automatik.
+ */
+export async function sendEmail({ to, subject, html }: SendEmailParams) {
+  const resendApiKey = process.env.RESEND_API_KEY
+
+  // 1. Cuba hantar melalui Resend API (HTTPS)
+  if (resendApiKey) {
+    try {
+      const fromEmail = process.env.RESEND_FROM || 'Hanscut Barbershop <onboarding@resend.dev>'
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [to],
+          subject,
+          html,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        console.log(`[RESEND] ✅ Emel berjaya dihantar ke ${to} (ID: ${data?.id})`)
+        return { success: true, provider: 'resend', id: data?.id }
+      } else {
+        const errText = await res.text()
+        console.warn(`[RESEND WARNING] Resend HTTP ${res.status}: ${errText}`)
+      }
+    } catch (resendErr: any) {
+      console.warn('[RESEND ERROR] Gagal hantar via Resend, mencuba Nodemailer:', resendErr?.message)
+    }
+  }
+
+  // 2. Fallback kepada Nodemailer SMTP jika ada konfigurasi
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || `Hanscut Barbershop <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      })
+      console.log(`[NODEMAILER] ✅ Emel berjaya dihantar ke ${to} melalui SMTP`)
+      return { success: true, provider: 'nodemailer' }
+    } catch (smtpErr: any) {
+      console.error('[NODEMAILER ERROR] Gagal melalui SMTP:', smtpErr?.message)
+      throw smtpErr
+    }
+  }
+
+  console.warn('[EMAIL] Tiada konfigurasi emel aktif yang berjaya dihantar.')
+  return { success: false }
+}
 
 interface BookingEmailData {
   customerName: string
@@ -29,66 +95,65 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }
-        .header { background: #1a1a1a; color: white; padding: 30px; text-align: center; }
-        .content { padding: 30px; background: #f9f9f9; }
-        .details { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-        .badge { background: #22c55e; color: white; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0c; color: #f4f4f5; padding: 20px; }
+        .card { background: #121215; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; }
+        .header { text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 24px; margin-bottom: 24px; }
+        .logo { font-size: 26px; font-weight: 800; color: #f59e0b; margin: 0; }
+        .details { background: #18181c; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.05); }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+        .detail-row:last-child { border-bottom: none; }
+        .price { color: #f59e0b; font-weight: bold; font-size: 16px; }
+        .footer { text-align: center; padding-top: 24px; color: #71717a; font-size: 12px; }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>💈 Hanscut Barbershop</h1>
-        <p>Tempahan Berjaya!</p>
-      </div>
-      <div class="content">
+      <div class="card">
+        <div class="header">
+          <h1 class="logo">💈 Hanscut Barbershop</h1>
+          <p style="color: #22c55e; font-weight: 600; margin-top: 8px;">✅ Tempahan Disahkan</p>
+        </div>
         <p>Assalamualaikum, <strong>${data.customerName}</strong>!</p>
-        <p>Tempahan anda telah berjaya dibuat. Berikut adalah butiran tempahan:</p>
+        <p>Tempahan anda telah direkodkan. Berikut adalah butiran temujanji anda:</p>
         
         <div class="details">
           <div class="detail-row">
-            <span>ID Tempahan</span>
+            <span style="color: #a1a1aa;">ID Tempahan</span>
             <strong>#${data.bookingId.slice(-8).toUpperCase()}</strong>
           </div>
           <div class="detail-row">
-            <span>Servis</span>
+            <span style="color: #a1a1aa;">Servis</span>
             <strong>${data.serviceName}</strong>
           </div>
           <div class="detail-row">
-            <span>Barber</span>
+            <span style="color: #a1a1aa;">Barber</span>
             <strong>${data.barberName}</strong>
           </div>
           <div class="detail-row">
-            <span>Tarikh</span>
+            <span style="color: #a1a1aa;">Tarikh</span>
             <strong>${data.date}</strong>
           </div>
           <div class="detail-row">
-            <span>Masa</span>
+            <span style="color: #a1a1aa;">Masa</span>
             <strong>${data.time}</strong>
           </div>
           <div class="detail-row">
-            <span>Jumlah</span>
-            <strong>RM ${data.totalPrice.toFixed(2)}</strong>
+            <span style="color: #a1a1aa;">Jumlah Bayaran</span>
+            <span class="price">RM ${data.totalPrice.toFixed(2)}</span>
           </div>
         </div>
         
-        <p>⚠️ Sila tiba 5 minit awal. Jika perlu batalkan, sila buat 2 jam sebelum temujanji.</p>
-        
-        <p>Jumpa nanti! 💈</p>
-      </div>
-      <div class="footer">
-        <p>© 2024 Hanscut Barbershop. Semua hak terpelihara.</p>
+        <p style="font-size: 13px; color: #a1a1aa;">⚠️ Sila tiba 5 minit sebelum masa slot anda. Terima kasih atas sokongan anda!</p>
+        <div class="footer">
+          <p>© 2026 Hanscut Barbershop. Semua hak terpelihara.</p>
+        </div>
       </div>
     </body>
     </html>
   `
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  await sendEmail({
     to: data.customerEmail,
-    subject: `✅ Tempahan Berjaya - ${data.serviceName} pada ${data.date}`,
+    subject: `✅ Tempahan Berjaya: ${data.serviceName} (${data.date})`,
     html,
   })
 }
@@ -100,30 +165,33 @@ export async function sendBookingCancellationEmail(data: BookingEmailData) {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; }
-        .header { background: #dc2626; color: white; padding: 30px; text-align: center; }
-        .content { padding: 30px; background: #f9f9f9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0c; color: #f4f4f5; padding: 20px; }
+        .card { background: #121215; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px; }
+        .header { text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 24px; margin-bottom: 24px; }
+        .logo { font-size: 26px; font-weight: 800; color: #ef4444; margin: 0; }
+        .footer { text-align: center; padding-top: 24px; color: #71717a; font-size: 12px; }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>💈 Hanscut Barbershop</h1>
-        <p>Tempahan Dibatalkan</p>
-      </div>
-      <div class="content">
-        <p>Tempahan anda (#${data.bookingId.slice(-8).toUpperCase()}) telah dibatalkan.</p>
-        <p>Servis: <strong>${data.serviceName}</strong></p>
-        <p>Tarikh: <strong>${data.date} ${data.time}</strong></p>
-        <p>Terima kasih kerana menggunakan perkhidmatan kami.</p>
+      <div class="card">
+        <div class="header">
+          <h1 class="logo">💈 Hanscut Barbershop</h1>
+          <p style="color: #ef4444; font-weight: 600; margin-top: 8px;">Tempahan Dibatalkan</p>
+        </div>
+        <p>Tempahan anda (<strong>#${data.bookingId.slice(-8).toUpperCase()}</strong>) telah dibatalkan.</p>
+        <p>Servis: <strong>${data.serviceName}</strong><br>Tarikh: <strong>${data.date} jam ${data.time}</strong></p>
+        <p style="color: #a1a1aa; font-size: 13px; margin-top: 20px;">Anda boleh membuat tempahan baharu pada bila-bila masa melalui laman web kami.</p>
+        <div class="footer">
+          <p>© 2026 Hanscut Barbershop.</p>
+        </div>
       </div>
     </body>
     </html>
   `
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  await sendEmail({
     to: data.customerEmail,
-    subject: `❌ Tempahan Dibatalkan - ${data.serviceName}`,
+    subject: `❌ Tempahan Dibatalkan: #${data.bookingId.slice(-8).toUpperCase()}`,
     html,
   })
 }
@@ -141,50 +209,49 @@ export async function sendPasswordResetOtpEmail(data: ResetOtpEmailData) {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; background-color: #0b0f19; color: #ffffff; padding: 20px; }
-        .card { background: #111827; border: 1px solid #1f2937; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .header { background: linear-gradient(135deg, #1f2937, #111827); border-bottom: 1px solid #374151; padding: 32px 20px; text-align: center; }
-        .logo { font-size: 28px; font-weight: 900; color: #f59e0b; margin: 0; letter-spacing: -0.5px; }
-        .content { padding: 32px 24px; color: #d1d5db; line-height: 1.6; }
-        .otp-container { background: #030712; border: 2px dashed #f59e0b; border-radius: 16px; padding: 24px; text-align: center; margin: 28px 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; background-color: #0a0a0c; color: #f4f4f5; padding: 20px; }
+        .card { background: #121215; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; overflow: hidden; }
+        .header { background: #18181c; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 28px 20px; text-align: center; }
+        .logo { font-size: 26px; font-weight: 900; color: #f59e0b; margin: 0; letter-spacing: -0.5px; }
+        .content { padding: 32px 24px; color: #d4d4d8; line-height: 1.6; }
+        .otp-container { background: #0a0a0c; border: 2px dashed #f59e0b; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0; }
         .otp-code { font-size: 38px; font-weight: 900; letter-spacing: 10px; color: #fbbf24; font-family: 'Courier New', Courier, monospace; margin: 0; }
-        .expiry { color: #ef4444; font-size: 13px; font-weight: bold; margin-top: 10px; }
-        .alert-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 8px; margin: 20px 0; font-size: 13px; color: #fca5a5; }
-        .footer { text-align: center; padding: 24px; color: #6b7280; font-size: 12px; }
+        .expiry { color: #f59e0b; font-size: 12px; font-weight: 600; margin-top: 10px; }
+        .alert-box { background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin: 20px 0; font-size: 13px; color: #fbbf24; }
+        .footer { text-align: center; padding: 20px; color: #71717a; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
       </style>
     </head>
     <body>
       <div class="card">
         <div class="header">
           <h1 class="logo">💈 Hanscut Barbershop</h1>
-          <p style="color: #9ca3af; font-size: 14px; margin: 6px 0 0 0;">Pengesahan Lupa Kata Laluan</p>
+          <p style="color: #a1a1aa; font-size: 13px; margin: 6px 0 0 0;">Pengesahan Lupa Kata Laluan</p>
         </div>
         <div class="content">
-          <p style="font-size: 16px; color: #f3f4f6;">Assalamualaikum, <strong>${data.name || 'Pelanggan'}</strong>!</p>
+          <p style="font-size: 15px; color: #ffffff;">Assalamualaikum, <strong>${data.name || 'Pelanggan'}</strong>!</p>
           <p>Kami telah menerima permintaan untuk menetapkan semula kata laluan bagi akaun Hanscut Barbershop anda. Sila gunakan kod OTP di bawah untuk meneruskan:</p>
           
           <div class="otp-container">
-            <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: #9ca3af; margin-bottom: 8px;">KOD OTP 6-DIGIT ANDA</p>
+            <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 8px;">KOD OTP 6-DIGIT ANDA</p>
             <p class="otp-code">${data.otp}</p>
             <p class="expiry">⏱️ Sah selama 10 minit sahaja</p>
           </div>
           
           <div class="alert-box">
-            <strong>⚠️ Penting:</strong> Jangan sesekali kongsikan kod ini kepada sesiapa termasuk pihak staf kami. Jika anda tidak meminta penetapan kata laluan ini, sila abaikan emel ini.
+            <strong>⚠️ Penting:</strong> Jangan kongsikan kod ini kepada sesiapa termasuk pihak staf kami. Jika anda tidak meminta penetapan ini, sila abaikan emel ini.
           </div>
           
-          <p style="font-size: 14px; color: #9ca3af;">Terima kasih,<br><strong>Pasukan Keselamatan Hanscut Barbershop</strong></p>
+          <p style="font-size: 13px; color: #a1a1aa; margin-top: 24px;">Terima kasih,<br><strong style="color: #ffffff;">Pasukan Hanscut Barbershop</strong></p>
         </div>
         <div class="footer">
-          <p>© 2026 Hanscut Barbershop Booking System. Emel ini dijana secara automatik.</p>
+          <p>© 2026 Hanscut Barbershop Booking System.</p>
         </div>
       </div>
     </body>
     </html>
   `
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || `Hanscut Barbershop <${process.env.EMAIL_USER}>`,
+  await sendEmail({
     to: data.email,
     subject: `🔐 Kod OTP Lupa Kata Laluan: ${data.otp}`,
     html,

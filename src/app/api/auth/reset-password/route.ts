@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { email, otp, newPassword } = resetSchema.parse(body)
 
-    // 1. Sahkan kod OTP
-    const verification = verifyAndConsumeOtp(email, otp)
+    // 1. Sahkan kod OTP dari database
+    const verification = await verifyAndConsumeOtp(email, otp)
     if (!verification.valid) {
       return NextResponse.json({ error: verification.error }, { status: 400 })
     }
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     await recordAuditLog({
       action: 'RESET_PASSWORD_SUCCESS',
       category: 'AUTH',
-      details: `Kata laluan berjaya ditukar melalui pengesahan OTP Gmail untuk akaun: ${email}`,
+      details: `Kata laluan berjaya ditukar melalui pengesahan OTP untuk akaun: ${email}`,
       userId: user.id,
       userEmail: email,
       userRole: user.role,

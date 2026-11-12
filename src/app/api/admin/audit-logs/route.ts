@@ -21,7 +21,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
-    const whereClause: any = {}
+    const whereClause: any = {
+      NOT: {
+        action: {
+          startsWith: 'PASSWORD_RESET_OTP',
+        },
+      },
+    }
+
     if (category && category !== 'ALL') {
       whereClause.category = category
     }
